@@ -501,8 +501,8 @@ TM.AssignValueColor(
 AddLabel(
     yes,
     if cciVal >= 0
-    then "Magic Trend: Bullish"
-    else "Magic Trend: Bearish",
+    then "Trend Magic: Bullish"
+    else "Trend Magic: Bearish",
     if cciVal >= 0
     then Color.GREEN
     else Color.RED
