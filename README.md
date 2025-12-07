@@ -591,8 +591,8 @@ def trendChange = trend != trend[1];
 def isBullish = trend == 1;
 
 # Add bubbles at trend changes
-AddChartBubble(showBubbles and trendChange and isBullish, low, "UP", Color.GREEN, no);
-AddChartBubble(showBubbles and trendChange and !isBullish, high, "DOWN", Color.RED, yes);
+AddChartBubble(showBubbles and trendChange and isBullish, low, "ST.Buy", Color.GREEN, no);
+AddChartBubble(showBubbles and trendChange and !isBullish, high, "ST.Sell", Color.RED, yes);
 
 # Add label
 AddLabel(showLabel, 
