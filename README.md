@@ -383,8 +383,8 @@ SellSignal.SetDefaultColor(GlobalColor("Bear"));
 SellSignal.SetLineWeight(3);
 
 # Buy/Sell Bubbles - Only on trend change
-AddChartBubble(trendUp, low - atr * 0.7, "Buy", GlobalColor("Bull"), no);
-AddChartBubble(trendDown, high + atr * 0.7, "Sell", GlobalColor("Bear"), yes);
+AddChartBubble(trendUp, low - atr * 0.7, "V.Buy", GlobalColor("Bull"), no);
+AddChartBubble(trendDown, high + atr * 0.7, "V.Sell", GlobalColor("Bear"), yes);
 
 # Summary Labels
 AddLabel(showSummary, "VIDYA: " + (if trend == 1 then "Bullish" else "Bearish"),
