@@ -14,7 +14,8 @@ MIT License - Free to use and modify
 7. [StochRSI](#stochrsi)
 8. [Opening Range Breakout](#opening-range-breakout)
 9. [SuperTrend Stock Hacker Scanner](#super-trend-stock-hacker-scanner)
-10. [Formatting](#formatting)
+10. [Support and Resistance](#support-and-resistance)
+11. [Formatting](#formatting)
 
 ---
 
@@ -1236,5 +1237,239 @@ alert(BearishBreakoutCondition, "ORB Bearish Breakout", Alert.Bar, Sound.Ring);
 ### SuperTrend Stock Hacker Scanner
  - Originial Source: [https://usethinkscript.com/threads/supertrend-indicator-by-mobius-for-thinkorswim.7/](https://usethinkscript.com/threads/supertrend-indicator-by-mobius-for-thinkorswim.7/)
 
+
+### Support and Resistance
+```
+# Dynamic Support & Resistance Study - V1 (Simplified)
+# Basic implementation for testing core functionality
+# Version 1.0
+
+declare upper;
+
+# ===== USER INPUTS =====
+input lookback_bars = 63;  # Default: ~3 months for daily charts
+input min_touchpoints = 2;  # Minimum touches required for a level
+input swing_sensitivity = 5;  # Bars on each side for swing detection
+input cluster_tolerance_pct = 2.0;  # % tolerance for grouping levels
+input num_levels_to_display = 3;  # How many S/R levels to show
+input proximity_alert_pct = 2.0;  # Alert when price within X% of level
+input show_labels = yes;  # Display level labels at top
+
+# ===== SWING HIGH/LOW DETECTION =====
+# A swing high must be higher than X bars before AND after it
+def isSwingHigh = if BarNumber() > swing_sensitivity and 
+                     BarNumber() <= HighestAll(BarNumber()) - swing_sensitivity
+                  then fold i = 1 to swing_sensitivity + 1 with sh = yes 
+                       while sh 
+                       do high > GetValue(high, i) and high > GetValue(high, -i)
+                  else no;
+
+# A swing low must be lower than X bars before AND after it  
+def isSwingLow = if BarNumber() > swing_sensitivity and 
+                    BarNumber() <= HighestAll(BarNumber()) - swing_sensitivity
+                 then fold j = 1 to swing_sensitivity + 1 with sl = yes 
+                      while sl 
+                      do low < GetValue(low, j) and low < GetValue(low, -j)
+                 else no;
+
+# Store swing levels
+def swingHighPrice = if isSwingHigh then high else Double.NaN;
+def swingLowPrice = if isSwingLow then low else Double.NaN;
+
+# ===== FIND TOP RESISTANCE LEVELS =====
+# Resistance 1: Highest swing high
+def r1_level = Highest(if isSwingHigh then high else 0, lookback_bars);
+
+# Resistance 2: Second highest swing high (excluding R1 zone)
+def r2_level = fold r2k = 0 to lookback_bars with r2 = 0.0
+    do if GetValue(isSwingHigh, r2k) and 
+          !IsNaN(GetValue(swingHighPrice, r2k)) and
+          GetValue(swingHighPrice, r2k) < r1_level * (1 - cluster_tolerance_pct / 100) and
+          GetValue(swingHighPrice, r2k) > r2
+       then GetValue(swingHighPrice, r2k)
+       else r2;
+
+# Resistance 3: Third highest swing high
+def r3_level = fold r3k = 0 to lookback_bars with r3 = 0.0
+    do if GetValue(isSwingHigh, r3k) and
+          !IsNaN(GetValue(swingHighPrice, r3k)) and
+          GetValue(swingHighPrice, r3k) < r2_level * (1 - cluster_tolerance_pct / 100) and
+          GetValue(swingHighPrice, r3k) > r3
+       then GetValue(swingHighPrice, r3k)
+       else r3;
+
+# ===== FIND TOP SUPPORT LEVELS =====
+# Support 1: Lowest swing low
+def s1_level = Lowest(if isSwingLow then low else Double.POSITIVE_INFINITY, lookback_bars);
+
+# Support 2: Second lowest swing low
+def s2_level = fold s2k = 0 to lookback_bars with s2 = Double.POSITIVE_INFINITY
+    do if GetValue(isSwingLow, s2k) and
+          !IsNaN(GetValue(swingLowPrice, s2k)) and
+          GetValue(swingLowPrice, s2k) > s1_level * (1 + cluster_tolerance_pct / 100) and
+          GetValue(swingLowPrice, s2k) < s2
+       then GetValue(swingLowPrice, s2k)
+       else s2;
+
+# Support 3: Third lowest swing low
+def s3_level = fold s3k = 0 to lookback_bars with s3 = Double.POSITIVE_INFINITY
+    do if GetValue(isSwingLow, s3k) and
+          !IsNaN(GetValue(swingLowPrice, s3k)) and
+          GetValue(swingLowPrice, s3k) > s2_level * (1 + cluster_tolerance_pct / 100) and
+          GetValue(swingLowPrice, s3k) < s3
+       then GetValue(swingLowPrice, s3k)
+       else s3;
+
+# ===== TOUCH COUNTING =====
+# Count how many times price came within tolerance of each level
+
+script countTouches {
+    input level_price = 0.0;
+    input tolerance_pct = 2.0;
+    input lookback = 63;
+    
+    plot touches = fold ct = 0 to lookback with touch_count = 0
+        do if !IsNaN(GetValue(close, ct)) and level_price > 0 and
+              (AbsValue(GetValue(high, ct) - level_price) / level_price * 100 <= tolerance_pct or
+               AbsValue(GetValue(low, ct) - level_price) / level_price * 100 <= tolerance_pct)
+           then touch_count + 1
+           else touch_count;
+}
+
+def r1_touches = countTouches(r1_level, cluster_tolerance_pct, lookback_bars);
+def r2_touches = countTouches(r2_level, cluster_tolerance_pct, lookback_bars);
+def r3_touches = countTouches(r3_level, cluster_tolerance_pct, lookback_bars);
+
+def s1_touches = countTouches(s1_level, cluster_tolerance_pct, lookback_bars);
+def s2_touches = countTouches(s2_level, cluster_tolerance_pct, lookback_bars);
+def s3_touches = countTouches(s3_level, cluster_tolerance_pct, lookback_bars);
+
+# ===== PLOTTING S/R LEVELS =====
+# Only plot if meets minimum touchpoint requirement
+
+plot Resistance1 = if r1_touches >= min_touchpoints and num_levels_to_display >= 1 
+                   then r1_level else Double.NaN;
+plot Resistance2 = if r2_touches >= min_touchpoints and num_levels_to_display >= 2
+                   then r2_level else Double.NaN;
+plot Resistance3 = if r3_touches >= min_touchpoints and num_levels_to_display >= 3
+                   then r3_level else Double.NaN;
+
+plot Support1 = if s1_touches >= min_touchpoints and num_levels_to_display >= 1
+                then s1_level else Double.NaN;
+plot Support2 = if s2_touches >= min_touchpoints and num_levels_to_display >= 2
+                then s2_level else Double.NaN;
+plot Support3 = if s3_touches >= min_touchpoints and num_levels_to_display >= 3
+                then s3_level else Double.NaN;
+
+# ===== COLOR CODING BY TOUCH FREQUENCY =====
+# Green = most touches, Yellow = medium, Red = fewest
+
+def max_resist_touches = Max(r1_touches, Max(r2_touches, r3_touches));
+def max_support_touches = Max(s1_touches, Max(s2_touches, s3_touches));
+
+# Resistance colors
+Resistance1.SetDefaultColor(if r1_touches >= max_resist_touches * 0.8 then Color.GREEN 
+                            else if r1_touches >= max_resist_touches * 0.5 then Color.YELLOW 
+                            else Color.RED);
+Resistance2.SetDefaultColor(if r2_touches >= max_resist_touches * 0.8 then Color.GREEN
+                            else if r2_touches >= max_resist_touches * 0.5 then Color.YELLOW
+                            else Color.RED);
+Resistance3.SetDefaultColor(if r3_touches >= max_resist_touches * 0.8 then Color.GREEN
+                            else if r3_touches >= max_resist_touches * 0.5 then Color.YELLOW
+                            else Color.RED);
+
+# Support colors
+Support1.SetDefaultColor(if s1_touches >= max_support_touches * 0.8 then Color.GREEN
+                         else if s1_touches >= max_support_touches * 0.5 then Color.YELLOW
+                         else Color.RED);
+Support2.SetDefaultColor(if s2_touches >= max_support_touches * 0.8 then Color.GREEN
+                         else if s2_touches >= max_support_touches * 0.5 then Color.YELLOW
+                         else Color.RED);
+Support3.SetDefaultColor(if s3_touches >= max_support_touches * 0.8 then Color.GREEN
+                         else if s3_touches >= max_support_touches * 0.5 then Color.YELLOW
+                         else Color.RED);
+
+# Line styling
+Resistance1.SetLineWeight(2);
+Resistance2.SetLineWeight(2);
+Resistance3.SetLineWeight(2);
+Support1.SetLineWeight(2);
+Support2.SetLineWeight(2);
+Support3.SetLineWeight(2);
+
+# ===== LABELS WITH TOUCH COUNTS =====
+AddLabel(show_labels and num_levels_to_display >= 1,
+         "R1: " + Round(r1_level, 2) + " (" + r1_touches + "x)", 
+         if r1_touches >= max_resist_touches * 0.8 then Color.GREEN
+         else if r1_touches >= max_resist_touches * 0.5 then Color.YELLOW
+         else Color.RED);
+         
+AddLabel(show_labels and num_levels_to_display >= 2,
+         "R2: " + Round(r2_level, 2) + " (" + r2_touches + "x)",
+         if r2_touches >= max_resist_touches * 0.8 then Color.GREEN
+         else if r2_touches >= max_resist_touches * 0.5 then Color.YELLOW
+         else Color.RED);
+         
+AddLabel(show_labels and num_levels_to_display >= 3,
+         "R3: " + Round(r3_level, 2) + " (" + r3_touches + "x)",
+         if r3_touches >= max_resist_touches * 0.8 then Color.GREEN
+         else if r3_touches >= max_resist_touches * 0.5 then Color.YELLOW
+         else Color.RED);
+
+AddLabel(show_labels and num_levels_to_display >= 1,
+         "S1: " + Round(s1_level, 2) + " (" + s1_touches + "x)",
+         if s1_touches >= max_support_touches * 0.8 then Color.GREEN
+         else if s1_touches >= max_support_touches * 0.5 then Color.YELLOW
+         else Color.RED);
+         
+AddLabel(show_labels and num_levels_to_display >= 2,
+         "S2: " + Round(s2_level, 2) + " (" + s2_touches + "x)",
+         if s2_touches >= max_support_touches * 0.8 then Color.GREEN
+         else if s2_touches >= max_support_touches * 0.5 then Color.YELLOW
+         else Color.RED);
+         
+AddLabel(show_labels and num_levels_to_display >= 3,
+         "S3: " + Round(s3_level, 2) + " (" + s3_touches + "x)",
+         if s3_touches >= max_support_touches * 0.8 then Color.GREEN
+         else if s3_touches >= max_support_touches * 0.5 then Color.YELLOW
+         else Color.RED);
+
+# ===== PROXIMITY ALERTS =====
+# Visual indicator when price is within X% of any S/R level
+
+def near_r1 = AbsValue(close - r1_level) / r1_level * 100 <= proximity_alert_pct;
+def near_r2 = AbsValue(close - r2_level) / r2_level * 100 <= proximity_alert_pct;
+def near_r3 = AbsValue(close - r3_level) / r3_level * 100 <= proximity_alert_pct;
+def near_s1 = AbsValue(close - s1_level) / s1_level * 100 <= proximity_alert_pct;
+def near_s2 = AbsValue(close - s2_level) / s2_level * 100 <= proximity_alert_pct;
+def near_s3 = AbsValue(close - s3_level) / s3_level * 100 <= proximity_alert_pct;
+
+def near_any_level = near_r1 or near_r2 or near_r3 or near_s1 or near_s2 or near_s3;
+
+# Background color when near S/R
+AssignPriceColor(if near_any_level then Color.YELLOW else Color.CURRENT);
+
+# Plot dot when near level
+plot ProximityAlert = if near_any_level then close else Double.NaN;
+ProximityAlert.SetPaintingStrategy(PaintingStrategy.POINTS);
+ProximityAlert.SetLineWeight(5);
+ProximityAlert.SetDefaultColor(Color.MAGENTA);
+ProximityAlert.HideBubble();
+ProximityAlert.HideTitle();
+
+# ===== V1 NOTES =====
+# Simple implementation focusing on:
+# - Basic swing detection
+# - Top 3 S/R levels
+# - Touch counting
+# - Color coding by frequency
+# - Proximity alerts
+#
+# For advanced features, see V2:
+# - Multiple ranking methods
+# - Role transition detection
+# - Up to 5 levels
+# - Recency weighting
+```
 ### Formatting
 - [https://toslc.thinkorswim.com/center/reference/thinkScript/Constants/Color/Color-GREEN](https://toslc.thinkorswim.com/center/reference/thinkScript/Constants/Color/Color-GREEN)
