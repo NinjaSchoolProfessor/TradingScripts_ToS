@@ -1367,27 +1367,35 @@ plot Support3 = if s3_touches >= min_touchpoints and num_levels_to_display >= 3
 def max_resist_touches = Max(r1_touches, Max(r2_touches, r3_touches));
 def max_support_touches = Max(s1_touches, Max(s2_touches, s3_touches));
 
-# Resistance colors
-Resistance1.SetDefaultColor(if r1_touches >= max_resist_touches * 0.8 then Color.GREEN 
-                            else if r1_touches >= max_resist_touches * 0.5 then Color.YELLOW 
-                            else Color.RED);
-Resistance2.SetDefaultColor(if r2_touches >= max_resist_touches * 0.8 then Color.GREEN
-                            else if r2_touches >= max_resist_touches * 0.5 then Color.YELLOW
-                            else Color.RED);
-Resistance3.SetDefaultColor(if r3_touches >= max_resist_touches * 0.8 then Color.GREEN
-                            else if r3_touches >= max_resist_touches * 0.5 then Color.YELLOW
-                            else Color.RED);
+# Calculate colors for each level (need to use HighestAll to make constant)
+def r1_touch_ratio = if max_resist_touches > 0 then r1_touches / max_resist_touches else 0;
+def r2_touch_ratio = if max_resist_touches > 0 then r2_touches / max_resist_touches else 0;
+def r3_touch_ratio = if max_resist_touches > 0 then r3_touches / max_resist_touches else 0;
+def s1_touch_ratio = if max_support_touches > 0 then s1_touches / max_support_touches else 0;
+def s2_touch_ratio = if max_support_touches > 0 then s2_touches / max_support_touches else 0;
+def s3_touch_ratio = if max_support_touches > 0 then s3_touches / max_support_touches else 0;
+
+# Resistance colors - use AssignValueColor for dynamic coloring
+Resistance1.AssignValueColor(if r1_touch_ratio >= 0.8 then Color.GREEN 
+                             else if r1_touch_ratio >= 0.5 then Color.YELLOW 
+                             else Color.RED);
+Resistance2.AssignValueColor(if r2_touch_ratio >= 0.8 then Color.GREEN
+                             else if r2_touch_ratio >= 0.5 then Color.YELLOW
+                             else Color.RED);
+Resistance3.AssignValueColor(if r3_touch_ratio >= 0.8 then Color.GREEN
+                             else if r3_touch_ratio >= 0.5 then Color.YELLOW
+                             else Color.RED);
 
 # Support colors
-Support1.SetDefaultColor(if s1_touches >= max_support_touches * 0.8 then Color.GREEN
-                         else if s1_touches >= max_support_touches * 0.5 then Color.YELLOW
-                         else Color.RED);
-Support2.SetDefaultColor(if s2_touches >= max_support_touches * 0.8 then Color.GREEN
-                         else if s2_touches >= max_support_touches * 0.5 then Color.YELLOW
-                         else Color.RED);
-Support3.SetDefaultColor(if s3_touches >= max_support_touches * 0.8 then Color.GREEN
-                         else if s3_touches >= max_support_touches * 0.5 then Color.YELLOW
-                         else Color.RED);
+Support1.AssignValueColor(if s1_touch_ratio >= 0.8 then Color.GREEN
+                          else if s1_touch_ratio >= 0.5 then Color.YELLOW
+                          else Color.RED);
+Support2.AssignValueColor(if s2_touch_ratio >= 0.8 then Color.GREEN
+                          else if s2_touch_ratio >= 0.5 then Color.YELLOW
+                          else Color.RED);
+Support3.AssignValueColor(if s3_touch_ratio >= 0.8 then Color.GREEN
+                          else if s3_touch_ratio >= 0.5 then Color.YELLOW
+                          else Color.RED);
 
 # Line styling
 Resistance1.SetLineWeight(2);
@@ -1400,38 +1408,38 @@ Support3.SetLineWeight(2);
 # ===== LABELS WITH TOUCH COUNTS =====
 AddLabel(show_labels and num_levels_to_display >= 1,
          "R1: " + Round(r1_level, 2) + " (" + r1_touches + "x)", 
-         if r1_touches >= max_resist_touches * 0.8 then Color.GREEN
-         else if r1_touches >= max_resist_touches * 0.5 then Color.YELLOW
+         if r1_touch_ratio >= 0.8 then Color.GREEN
+         else if r1_touch_ratio >= 0.5 then Color.YELLOW
          else Color.RED);
          
 AddLabel(show_labels and num_levels_to_display >= 2,
          "R2: " + Round(r2_level, 2) + " (" + r2_touches + "x)",
-         if r2_touches >= max_resist_touches * 0.8 then Color.GREEN
-         else if r2_touches >= max_resist_touches * 0.5 then Color.YELLOW
+         if r2_touch_ratio >= 0.8 then Color.GREEN
+         else if r2_touch_ratio >= 0.5 then Color.YELLOW
          else Color.RED);
          
 AddLabel(show_labels and num_levels_to_display >= 3,
          "R3: " + Round(r3_level, 2) + " (" + r3_touches + "x)",
-         if r3_touches >= max_resist_touches * 0.8 then Color.GREEN
-         else if r3_touches >= max_resist_touches * 0.5 then Color.YELLOW
+         if r3_touch_ratio >= 0.8 then Color.GREEN
+         else if r3_touch_ratio >= 0.5 then Color.YELLOW
          else Color.RED);
 
 AddLabel(show_labels and num_levels_to_display >= 1,
          "S1: " + Round(s1_level, 2) + " (" + s1_touches + "x)",
-         if s1_touches >= max_support_touches * 0.8 then Color.GREEN
-         else if s1_touches >= max_support_touches * 0.5 then Color.YELLOW
+         if s1_touch_ratio >= 0.8 then Color.GREEN
+         else if s1_touch_ratio >= 0.5 then Color.YELLOW
          else Color.RED);
          
 AddLabel(show_labels and num_levels_to_display >= 2,
          "S2: " + Round(s2_level, 2) + " (" + s2_touches + "x)",
-         if s2_touches >= max_support_touches * 0.8 then Color.GREEN
-         else if s2_touches >= max_support_touches * 0.5 then Color.YELLOW
+         if s2_touch_ratio >= 0.8 then Color.GREEN
+         else if s2_touch_ratio >= 0.5 then Color.YELLOW
          else Color.RED);
          
 AddLabel(show_labels and num_levels_to_display >= 3,
          "S3: " + Round(s3_level, 2) + " (" + s3_touches + "x)",
-         if s3_touches >= max_support_touches * 0.8 then Color.GREEN
-         else if s3_touches >= max_support_touches * 0.5 then Color.YELLOW
+         if s3_touch_ratio >= 0.8 then Color.GREEN
+         else if s3_touch_ratio >= 0.5 then Color.YELLOW
          else Color.RED);
 
 # ===== PROXIMITY ALERTS =====
