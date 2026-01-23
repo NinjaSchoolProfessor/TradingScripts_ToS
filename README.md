@@ -12,10 +12,11 @@ MIT License - Free to use and modify
 5. [VWAP](#vwap)
 6. [RSI](#rsi)
 7. [StochRSI](#stochrsi)
-8. [Opening Range Breakout](#opening-range-breakout)
-9. [SuperTrend Stock Hacker Scanner](#super-trend-stock-hacker-scanner)
-10. [Support and Resistance](#support-and-resistance)
-11. [Formatting](#formatting)
+8. [ATR For Futures](#atr-for-futures)
+9. [Opening Range Breakout](#opening-range-breakout)
+10. [SuperTrend Stock Hacker Scanner](#super-trend-stock-hacker-scanner)
+11. [Support and Resistance](#support-and-resistance)
+12. [Formatting](#formatting)
 
 ---
 
@@ -800,6 +801,53 @@ AddLabel(yes,
     else if FullK < over_Sold then Color.ORANGE 
     else if FullK > 50 then Color.GREEN 
     else Color.RED);
+```
+
+### ATR For Futures
+ - ATR-based stop loss calculator designed for futures that analyzes true range over a customizable lookback period and provides three stop levels (Tight, Normal, Wide) with empirically accurate percentiles showing your actual risk of being stopped out by normal volatility. Helps swing traders avoid placing stops too tight and getting shaken out of winning trades.
+
+```
+declare lower;
+
+# User Inputs
+input lookbackPeriod = 60;
+#hint lookbackPeriod: Number of bars to analyze for stop calculations. Set based on timeframe:\n1-5min: 100-200 bars\n15-30min: 80-150 bars\n1-4hr: 50-100 bars\nDaily: 30-60 bars\nWeekly: 20-30 bars
+
+# Calculate True Range for all bars
+def trueRange = TrueRange(high, close, low);
+
+# Calculate statistics over lookback period
+def avgTrueRange = Average(trueRange, lookbackPeriod);
+def stdDevTrueRange = StDev(trueRange, lookbackPeriod);
+def maxTrueRange = Highest(trueRange, lookbackPeriod);
+
+# Stop distances based on average true range over lookback period
+def tightStop = 1.0 * avgTrueRange;
+def normalStop = 1.5 * avgTrueRange;
+def wideStop = 2.0 * avgTrueRange;
+
+# Calculate ACTUAL empirical percentiles for each stop level
+def countBelowTight = Sum(trueRange < tightStop, lookbackPeriod);
+def countBelowNormal = Sum(trueRange < normalStop, lookbackPeriod);
+def countBelowWide = Sum(trueRange < wideStop, lookbackPeriod);
+
+# Convert to percentages
+def actualPercentileTight = Round((countBelowTight / lookbackPeriod) * 100, 1);
+def actualPercentileNormal = Round((countBelowNormal / lookbackPeriod) * 100, 1);
+def actualPercentileWide = Round((countBelowWide / lookbackPeriod) * 100, 1);
+
+# Plot average true range
+plot AvgTR_Plot = avgTrueRange;
+AvgTR_Plot.SetDefaultColor(GetColor(8));
+
+# Labels
+AddLabel(yes, "Avg True Range(" + lookbackPeriod + "): " + Round(avgTrueRange, 2), Color.CYAN);
+AddLabel(yes, "Std Deviation: " + Round(stdDevTrueRange, 2), Color.GRAY);
+AddLabel(yes, "Max Range: " + Round(maxTrueRange, 2), Color.RED);
+AddLabel(yes, "---", Color.GRAY);
+AddLabel(yes, "Tight (1.0x=" + actualPercentileTight + "%): " + Round(tightStop, 2), Color.LIGHT_RED);
+AddLabel(yes, "Normal (1.5x=" + actualPercentileNormal + "%): " + Round(normalStop, 2), Color.LIGHT_GREEN);
+AddLabel(yes, "Wide (2.0x=" + actualPercentileWide + "%): " + Round(wideStop, 2), Color.YELLOW);
 ```
 ### Opening Range Breakout
 
