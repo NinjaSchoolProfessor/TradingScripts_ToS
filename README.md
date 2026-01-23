@@ -12,7 +12,7 @@ MIT License - Free to use and modify
 5. [VWAP](#vwap)
 6. [RSI](#rsi)
 7. [StochRSI](#stochrsi)
-8. [ATR For Futures](#atr-for-futures)
+8. [ATR For Futures - Lower](#atr-for-futures---lower)
 9. [Opening Range Breakout](#opening-range-breakout)
 10. [SuperTrend Stock Hacker Scanner](#super-trend-stock-hacker-scanner)
 11. [Support and Resistance](#support-and-resistance)
@@ -803,7 +803,7 @@ AddLabel(yes,
     else Color.RED);
 ```
 
-### ATR For Futures
+### ATR For Futures - Lower
  - ATR-based stop loss calculator designed for futures that analyzes true range over a customizable lookback period and provides three stop levels (Tight, Normal, Wide) with empirically accurate percentiles showing your actual risk of being stopped out by normal volatility. Helps swing traders avoid placing stops too tight and getting shaken out of winning trades.
 
 ```
