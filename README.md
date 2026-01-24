@@ -809,7 +809,7 @@ AddLabel(yes,
 
 #### Critical Setup Requirement
 
-**YOU MUST MATCH YOUR CHART TIMEFRAME TO THE STUDY SETTINGS** If your chart timeframe doesn't match the `chartTimeframe` setting, the indicator will produce incorrect stop distances.** For example, viewing a 5-minute chart but selecting "1hour" in settings will calculate stops using wrong volatility data, leading to stops that are either dangerously tight or excessively wide. Also note that the 5min timeframe can only look back 12 days.
+**YOU MUST MATCH YOUR CHART TIMEFRAME TO THE STUDY SETTINGS** If your chart timeframe doesn't match the `chartTimeframe` setting, the indicator will produce incorrect stop distances. For example, viewing a 5-minute chart but selecting "1hour" in settings will calculate stops using wrong volatility data, leading to stops that are either dangerously tight or excessively wide. Also note that the 5min timeframe can only look back 12 days.
 
 ### Setup Steps:
 1. **Set your chart timeframe** (e.g., 1-hour chart)
