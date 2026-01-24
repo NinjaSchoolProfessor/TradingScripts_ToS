@@ -820,7 +820,7 @@ AddLabel(yes,
 
 | Your Chart | Study Setting | Lookback Days | Calculated Bars |
 |------------|---------------|---------------|-----------------|
-| 5-minute   | chartTimeframe: "5min"  | 12 days  | 936  bars |
+| 5-minute   | chartTimeframe: "5min"  | 12 days  | 936  bars (ToS only supports up to 1000 bars) |
 | 1-hour     | chartTimeframe: "1hour" | 30 days | 210 bars |
 | Daily      | chartTimeframe: "Daily" | 60 days | 60 bars  |
 | 15-minute  | chartTimeframe: "15min" | 10 days | 260 bars |
