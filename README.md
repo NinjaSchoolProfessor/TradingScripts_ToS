@@ -686,7 +686,8 @@ AddLabel(yes,
 ```
 
 ### RSI
-- Standard relative strength index (RSI) that includes a label that turns green/red as StochRSI moves above/below 50%. Then turns cyan for over bought, and orage for over sold.
+- Standard relative strength index (RSI) that includes an updated label with colors as StochRSI moves above/below 20%,50%,80% thresholds.
+
 ```
 declare lower;
 input length = 14;
@@ -724,18 +725,18 @@ DownSignal.SetDefaultColor(Color.DOWNTICK);
 DownSignal.SetPaintingStrategy(PaintingStrategy.ARROW_DOWN);
 
 AddLabel(yes, 
-    if RSI < 20 then "RSI: < 20 - Over sold"
-    else if RSI > 80 then "RSI: > 80 - Over bought"
-    else if RSI > 50 then "RSI > 50"
+    if RSI < over_Sold then "RSI: < 20 - Over sold"
+    else if RSI > over_Bought then "RSI: > 80 - Over bought"
+    else if RSI >= 50 then "RSI >= 50"
     else "RSI < 50",
-    if RSI < 20 then Color.GREEN
-    else if RSI > 80 then Color.RED
-    else if RSI > 50 then Color.RED
-    else Color.GREEN);
+    if RSI < over_Sold then Color.GREEN
+    else if RSI > over_Bought then Color.RED
+    else if RSI >= 50 then Color.ORANGE
+    else Color.YELLOW);
 ```
 
 ### StochRSI
-- Standard stochastic relative strength index (StochRSI) that includes a label that turns green/red as StochRSI moves above/below 50%. Then turns cyan for over bought, and orage for over sold.
+- Standard stochastic relative strength index (StochRSI) that includes an updated label with colors as StochRSI moves above/below 20%,50%,80% thresholds.
 
 ```
 declare lower;
@@ -795,12 +796,12 @@ DownSignal.SetPaintingStrategy(PaintingStrategy.ARROW_DOWN);
 AddLabel(yes, 
     if FullK < over_Sold then "StochRSI: < 20 - Over sold"
     else if FullK > over_Bought then "StochRSI: > 80 - Over bought"
-    else if FullK > 50 then "StochRSI > 50"
+    else if FullK >= 50 then "StochRSI >= 50"
     else "StochRSI < 50",
     if FullK < over_Sold then Color.GREEN
     else if FullK > over_Bought then Color.RED
-    else if FullK > 50 then Color.RED
-    else Color.GREEN);
+    else if FullK >= 50 then Color.ORANGE
+    else Color.YELLOW);
 ```
 
 ### ATR For Futures - Upper
