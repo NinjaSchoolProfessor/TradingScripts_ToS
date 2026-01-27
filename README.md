@@ -804,7 +804,8 @@ AddLabel(yes,
 ```
 
 ### ATR For Futures - Upper
- - This adaptive trailing stop indicator automatically calculates stop loss distances based on historical volatility (Average True Range) over a user-defined lookback period. It dynamically reports stop levels as price moves to maintain consistent risk management based on the security's actual price movement characteristics. Users can choose to simply show the "Stop Distance Only" or calculate that value based on the current price by selecting "Calculated Stop Level". **YOUR CHART TIMEFRAME MUST MEET OR EXCEED THE STUDY SETTINGS** If your chart timeframe doesn't match the `days to lookback` setting, the indicator will produce an error informing you to increase the timeframe view for stop-loss.
+ - This adaptive trailing stop indicator automatically calculates stop loss distances based on historical volatility (Average True Range) over a user-defined lookback period. It dynamically reports stop levels as price moves to maintain consistent risk management based on the security's actual price movement characteristics. Users can choose to simply show the "Stop Distance Only" or calculate that value based on the current price by selecting "Calculated Stop Level".  --
+ - Note:**YOUR CHART TIMEFRAME MUST MEET OR EXCEED THE STUDY SETTINGS** If your chart timeframe doesn't match the `days to lookback` setting, the indicator will produce an error informing you to increase the timeframe view for stop-loss.
 
 ### Setup Steps:
 1. **Set your chart timeframe** (e.g., 1-hour chart)
@@ -816,7 +817,7 @@ input marketType = {default Futures, Equities};
 #hint marketType: Select your market type:\n• Futures: ~23 hours of trading per day (Sun 6PM - Fri 5PM EST)\n• Equities: ~6.5 hours of trading per day (9:30AM - 4PM EST)\nThis adjusts the bars-per-day calculation for accurate lookback periods.
 
 input daysToLookback = 5;
-#hint daysToLookback: Number of trading days to analyze. This will be converted to bars based on your market type and timeframe.\n\nDATA LIMITS:\nFutures (5min): ~3-4 days max\nFutures (15min): ~10 days max\nEquities (5min): ~12 days max\nEquities (15min): ~40 days max
+#hint daysToLookback: Number of trading days to analyze. This will be converted to bars based on your market type and timeframe.\n\nDATA LIMITS (based on ~1000 bars TOS typically loads - your account may vary):\n\nFUTURES:\n• 5min: Max ~3 days\n• 15min: Max ~10 days\n• 30min: Max ~21 days\n• 1hour: Max ~43 days\n• 4hour: Max ~166 days\n• Daily/Weekly: 1000 days / weeks\n\nEQUITIES:\n• 5min: Max ~12 days\n• 15min: Max ~38 days\n• 30min: Max ~77 days\n• 1hour: Max ~142 days\n• 4hour: Max ~500 days\n• Daily/Weekly: 1000 days / weeks
 
 input chartTimeframe = {default "5min", "15min", "30min", "1hour", "4hour", "Daily", "Weekly"};
 #hint chartTimeframe: SELECT YOUR ACTUAL CHART TIMEFRAME. This must match the timeframe of the chart you're viewing.\nThe indicator uses this to calculate how many bars equal your desired lookback days.
