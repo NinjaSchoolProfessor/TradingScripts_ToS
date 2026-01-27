@@ -804,46 +804,44 @@ AddLabel(yes,
 ```
 
 ### ATR For Futures - Upper
- - This adaptive trailing stop indicator automatically calculates stop loss distances based on historical volatility (Average True Range) over a user-defined lookback period. It dynamically adjusts stop levels as price moves in your favor while maintaining consistent risk management based on the security's actual price movement characteristics.
-
-#### Critical Setup Requirement
-
-**YOU MUST MATCH YOUR CHART TIMEFRAME TO THE STUDY SETTINGS** If your chart timeframe doesn't match the `chartTimeframe` setting, the indicator will produce incorrect stop distances. For example, viewing a 5-minute chart but selecting "1hour" in settings will calculate stops using wrong volatility data, leading to stops that are either dangerously tight or excessively wide. Also note that the 5min timeframe can only look back 12 days.
+ - This adaptive trailing stop indicator automatically calculates stop loss distances based on historical volatility (Average True Range) over a user-defined lookback period. It dynamically reports stop levels as price moves to maintain consistent risk management based on the security's actual price movement characteristics. Users can choose to simply show the "Stop Distance Only" or calculate that value based on the current price by selecting "Calculated Stop Level". **YOUR CHART TIMEFRAME MUST MEET OR EXCEED THE STUDY SETTINGS** If your chart timeframe doesn't match the `days to lookback` setting, the indicator will produce an error informing you to increase the timeframe view for stop-loss.
 
 ### Setup Steps:
 1. **Set your chart timeframe** (e.g., 1-hour chart)
 2. **Open study settings** and select the matching timeframe from the `chartTimeframe` dropdown (e.g., "1hour")
 3. **Set your lookback period** using `daysToLookback` (e.g., 30 days)
 
-### Example Configurations:
-
-| Your Chart | Study Setting | Lookback Days | Calculated Bars |
-|------------|---------------|---------------|-----------------|
-| 5-minute   | chartTimeframe: "5min"  | 12 days  | 936  bars (ToS only supports up to 1000 bars) |
-| 1-hour     | chartTimeframe: "1hour" | 30 days | 210 bars |
-| Daily      | chartTimeframe: "Daily" | 60 days | 60 bars  |
-| 15-minute  | chartTimeframe: "15min" | 10 days | 260 bars |
-
 ```
+input marketType = {default Futures, Equities};
+#hint marketType: Select your market type:\n• Futures: ~23 hours of trading per day (Sun 6PM - Fri 5PM EST)\n• Equities: ~6.5 hours of trading per day (9:30AM - 4PM EST)\nThis adjusts the bars-per-day calculation for accurate lookback periods.
+
 input daysToLookback = 5;
-#hint daysToLookback: Number of trading days to analyze. This will be converted to bars based on your timeframe selection.\nNOTE: 5-minute charts are limited to ~12 days maximum due to TOS data availability.
+#hint daysToLookback: Number of trading days to analyze. This will be converted to bars based on your market type and timeframe.\n\nDATA LIMITS:\nFutures (5min): ~3-4 days max\nFutures (15min): ~10 days max\nEquities (5min): ~12 days max\nEquities (15min): ~40 days max
 
 input chartTimeframe = {default "5min", "15min", "30min", "1hour", "4hour", "Daily", "Weekly"};
-#hint chartTimeframe: SELECT YOUR ACTUAL CHART TIMEFRAME. This must match the timeframe of the chart you're viewing.\nThe indicator uses this to calculate how many bars equal your desired lookback days.\n\nDATA LIMITS:\n• 5min: Maximum ~12 days lookback\n• 15min+: No practical limit
+#hint chartTimeframe: SELECT YOUR ACTUAL CHART TIMEFRAME. This must match the timeframe of the chart you're viewing.\nThe indicator uses this to calculate how many bars equal your desired lookback days.
 
-# Calculate bars per day based on timeframe (assumes 6.5 hour trading day = 390 minutes)
+input atrMultiplier = 2.0;
+#hint atrMultiplier: Multiplier applied to Average True Range for stop distance calculation.\n\nCOMMON VALUES:\n• 1.0x (Tight): Closer stops, more sensitive, higher stop-out risk (~60-70% of bars fit)\n• 1.5x (Normal): Balanced approach, filters normal volatility (~75-85% of bars fit)\n• 2.0x (Wide): Looser stops, accommodates larger swings (~85-95% of bars fit)\n\nHigher values = wider stops = lower stop-out frequency but larger potential losses per trade.
+
+input labelDisplayType = {default "Calculated Stop Level", "Stop Distance Only"};
+#hint labelDisplayType: Choose how stop values are displayed in labels:\n• Calculated Stop Level: Shows actual price levels (e.g., Long: 25657.70, Short: 25702.30)\n• Stop Distance Only: Shows distance from current price (e.g., 22.30)
+
+# Calculate bars per day based on market type and timeframe
+# Futures: ~23 hour trading day = 1380 minutes
+# Equities: ~6.5 hour trading day = 390 minutes
 def barsPerDay;
 switch (chartTimeframe) {
 case "5min":
-    barsPerDay = 78;
+    barsPerDay = if marketType == marketType.Futures then 276 else 78;
 case "15min":
-    barsPerDay = 26;
+    barsPerDay = if marketType == marketType.Futures then 92 else 26;
 case "30min":
-    barsPerDay = 13;
+    barsPerDay = if marketType == marketType.Futures then 46 else 13;
 case "1hour":
-    barsPerDay = 7;
+    barsPerDay = if marketType == marketType.Futures then 23 else 7;
 case "4hour":
-    barsPerDay = 2;
+    barsPerDay = if marketType == marketType.Futures then 6 else 2;
 case "Daily":
     barsPerDay = 1;
 case "Weekly":
@@ -853,103 +851,41 @@ case "Weekly":
 # Calculate actual lookback period in bars
 def lookbackPeriod = Round(daysToLookback * barsPerDay, 0);
 
-input stopType = {tight, default normal, wide};
-#hint stopType: Stop distance multiplier applied to average true range:\n• Tight (1.0x): Closer stops, more sensitive to price movement, higher stop-out risk\n• Normal (1.5x): Balanced approach, filters normal volatility while allowing trend development\n• Wide (2.0x): Looser stops, accommodates larger swings, lower stop-out risk but larger potential losses
-
-input firstTrade = {default long, short};
-#hint firstTrade: Initial direction when indicator starts:\n• Long: Starts with trailing stop below price (assumes bullish position)\n• Short: Starts with trailing stop above price (assumes bearish position)\nIndicator will automatically flip direction when price crosses the trailing stop.
-
 Assert(daysToLookback > 0, "'days to lookback' must be positive: " + daysToLookback);
+Assert(atrMultiplier > 0, "'atr multiplier' must be positive: " + atrMultiplier);
+
+# Count available bars using BarNumber (more reliable than manual counting)
+def barsAvailable = BarNumber();
+def hasEnoughData = barsAvailable >= lookbackPeriod;
 
 # Calculate True Range
 def trueRange = TrueRange(high, close, low);
 
 # Calculate statistics over lookback period
 def avgTrueRange = Average(trueRange, lookbackPeriod);
-def stdDevTrueRange = StDev(trueRange, lookbackPeriod);
-def maxTrueRange = Highest(trueRange, lookbackPeriod);
 
-# Stop distances based on average true range over lookback period
-def tightStop = 1.0 * avgTrueRange;
-def normalStop = 1.5 * avgTrueRange;
-def wideStop = 2.0 * avgTrueRange;
+# Stop distance based on user's ATR multiplier
+def stopDistance = atrMultiplier * avgTrueRange;
 
-# Calculate empirical percentiles for each stop level
-def countBelowTight = Sum(trueRange < tightStop, lookbackPeriod);
-def countBelowNormal = Sum(trueRange < normalStop, lookbackPeriod);
-def countBelowWide = Sum(trueRange < wideStop, lookbackPeriod);
+# Calculate empirical percentile for selected stop level
+def countBelowStop = Sum(trueRange < stopDistance, lookbackPeriod);
+def actualPercentile = Round((countBelowStop / lookbackPeriod) * 100, 1);
 
-def actualPercentileTight = Round((countBelowTight / lookbackPeriod) * 100, 1);
-def actualPercentileNormal = Round((countBelowNormal / lookbackPeriod) * 100, 1);
-def actualPercentileWide = Round((countBelowWide / lookbackPeriod) * 100, 1);
+# Calculate stop levels for both long and short positions
+def currentPrice = close;
 
-# Select stop distance based on stopType
-def loss;
-switch (stopType) {
-case tight:
-    loss = tightStop;
-case normal:
-    loss = normalStop;
-case wide:
-    loss = wideStop;
-}
+def longStopLevel = currentPrice - stopDistance;
+def shortStopLevel = currentPrice + stopDistance;
 
-# State machine for trailing stop
-def state = {default init, long, short};
-def trail;
+# Labels - format based on user selection (always 2 decimal places to prevent jitter)
+def displayValueLong = Round(if labelDisplayType == labelDisplayType."Calculated Stop Level" 
+    then longStopLevel else stopDistance, 2);
+def displayValueShort = Round(if labelDisplayType == labelDisplayType."Calculated Stop Level" 
+    then shortStopLevel else stopDistance, 2);
 
-switch (state[1]) {
-case init:
-    if (!IsNaN(loss)) {
-        switch (firstTrade) {
-        case long:
-            state = state.long;
-            trail = close - loss;
-        case short:
-            state = state.short;
-            trail = close + loss;
-        }
-    } else {
-        state = state.init;
-        trail = Double.NaN;
-    }
-case long:
-    if (close > trail[1]) {
-        state = state.long;
-        trail = Max(trail[1], close - loss);
-    } else {
-        state = state.short;
-        trail = close + loss;
-    }
-case short:
-    if (close < trail[1]) {
-        state = state.short;
-        trail = Min(trail[1], close + loss);
-    } else {
-        state = state.long;
-        trail = close - loss;
-    }
-}
-
-def BuySignal = Crosses(state == state.long, 0, CrossingDirection.ABOVE);
-def SellSignal = Crosses(state == state.short, 0, CrossingDirection.ABOVE);
-
-plot TrailingStop = trail;
-TrailingStop.SetPaintingStrategy(PaintingStrategy.POINTS);
-TrailingStop.DefineColor("Buy", GetColor(0));
-TrailingStop.DefineColor("Sell", GetColor(1));
-TrailingStop.AssignValueColor(if state == state.long
-    then TrailingStop.Color("Buy")
-    else TrailingStop.Color("Sell"));
-
-# Labels
-AddLabel(yes, "Lookback: " + daysToLookback + "d (" + lookbackPeriod + " bars)", Color.WHITE);
-AddLabel(yes, "Avg TR: " + Round(avgTrueRange, 2), Color.CYAN);
-AddLabel(yes, "StdDev: " + Round(stdDevTrueRange, 2), Color.GRAY);
-AddLabel(yes, "Max: " + Round(maxTrueRange, 2), Color.RED);
-AddLabel(yes, "Tight(1.0x=" + actualPercentileTight + "%): " + Round(tightStop, 2), Color.LIGHT_RED);
-AddLabel(yes, "Normal(1.5x=" + actualPercentileNormal + "%): " + Round(normalStop, 2), Color.LIGHT_GREEN);
-AddLabel(yes, "Wide(2.0x=" + actualPercentileWide + "%): " + Round(wideStop, 2), Color.YELLOW);
+# Display Labels - show error in red if insufficient data, otherwise show ATR values
+AddLabel(!hasEnoughData, "INCREASE TIMEFRAME VIEW FOR ATR STOP-LOSS! : Need " + lookbackPeriod + " bars, have " + barsAvailable, Color.RED);
+AddLabel(hasEnoughData, "ATR(" + atrMultiplier + "x=" + actualPercentile + "%) Long: " + AsText(displayValueLong) + " | Short: " + AsText(displayValueShort), Color.LIGHT_GREEN);
 ```
 
 
