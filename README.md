@@ -732,7 +732,7 @@ AddLabel(yes,
     if RSI < over_Sold then Color.GREEN
     else if RSI > over_Bought then Color.RED
     else if RSI >= 50 then Color.ORANGE
-    else Color.YELLOW);
+    else Color.LIGHT_GREEN);
 ```
 
 ### StochRSI
@@ -801,7 +801,7 @@ AddLabel(yes,
     if FullK < over_Sold then Color.GREEN
     else if FullK > over_Bought then Color.RED
     else if FullK >= 50 then Color.ORANGE
-    else Color.YELLOW);
+    else Color.LIGHT_GREEN);
 ```
 
 ### ATR For Futures - Upper
