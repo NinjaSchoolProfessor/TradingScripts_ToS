@@ -691,9 +691,9 @@ AddLabel(yes,
 declare lower;
 input length = 14;
 input over_Bought = 70;
-#hint over_Bought: Default signal for over bought is 70.
+#hint over_Bought: Default signal for over bought is 70 but to reduce false positives many traders use 80.
 input over_Sold = 30;
-#hint over_Sold: Default signal for over sold is 30.
+#hint over_Sold : Default signal for over sold is 30 but to reduce false positives many traders use 20.
 input price = close;
 input averageType = AverageType.WILDERS;
 input showBreakoutSignals = no;
@@ -724,14 +724,14 @@ DownSignal.SetDefaultColor(Color.DOWNTICK);
 DownSignal.SetPaintingStrategy(PaintingStrategy.ARROW_DOWN);
 
 AddLabel(yes, 
-    if RSI > over_Bought then "RSI: Over bought" 
-    else if RSI < over_Sold then "RSI: Over sold" 
-    else if RSI > 50 then "RSI: > 50" 
-    else "RSI: < 50", 
-    if RSI > over_Bought then Color.CYAN 
-    else if RSI < over_Sold then Color.ORANGE 
-    else if RSI > 50 then Color.GREEN 
-    else Color.RED);
+    if RSI < 20 then "RSI: < 20 - Over sold"
+    else if RSI > 80 then "RSI: > 80 - Over bought"
+    else if RSI > 50 then "RSI > 50"
+    else "RSI < 50",
+    if RSI < 20 then Color.GREEN
+    else if RSI > 80 then Color.RED
+    else if RSI > 50 then Color.RED
+    else Color.GREEN);
 ```
 
 ### StochRSI
@@ -793,14 +793,14 @@ DownSignal.SetDefaultColor(Color.DOWNTICK);
 DownSignal.SetPaintingStrategy(PaintingStrategy.ARROW_DOWN);
 
 AddLabel(yes, 
-    if FullK > over_Bought then "StochRSI: Over bought" 
-    else if FullK < over_Sold then "StochRSI: Over sold" 
-    else if FullK > 50 then "StochRSI: > 50" 
-    else "StochRSI: < 50", 
-    if FullK > over_Bought then Color.CYAN 
-    else if FullK < over_Sold then Color.ORANGE 
-    else if FullK > 50 then Color.GREEN 
-    else Color.RED);
+    if FullK < over_Sold then "StochRSI: < 20 - Over sold"
+    else if FullK > over_Bought then "StochRSI: > 80 - Over bought"
+    else if FullK > 50 then "StochRSI > 50"
+    else "StochRSI < 50",
+    if FullK < over_Sold then Color.GREEN
+    else if FullK > over_Bought then Color.RED
+    else if FullK > 50 then Color.RED
+    else Color.GREEN);
 ```
 
 ### ATR For Futures - Upper
