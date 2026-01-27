@@ -725,13 +725,13 @@ DownSignal.SetDefaultColor(Color.DOWNTICK);
 DownSignal.SetPaintingStrategy(PaintingStrategy.ARROW_DOWN);
 
 AddLabel(yes, 
-    if RSI < over_Sold then "RSI: < " + over_Sold + " - Over sold"
-    else if RSI > over_Bought then "RSI: > " + over_Bought + " - Over bought"
-    else if RSI >= midpoint then "RSI >= " + midpoint
-    else "RSI < " + midpoint,
+    if RSI < over_Sold then "RSI: Over sold"
+    else if RSI > over_Bought then "RSI: Over bought"
+    else if RSI >= 50 then "RSI >= 50"
+    else "RSI < 50",
     if RSI < over_Sold then Color.GREEN
     else if RSI > over_Bought then Color.RED
-    else if RSI >= midpoint then Color.ORANGE
+    else if RSI >= 50 then Color.ORANGE
     else Color.LIGHT_GREEN);
 ```
 
