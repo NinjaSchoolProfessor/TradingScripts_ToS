@@ -686,7 +686,7 @@ AddLabel(yes,
 ```
 
 ### RSI
-- Standard relative strength index (RSI) that includes an updated label with colors as StochRSI moves above/below 20%,50%,80% thresholds.
+- Standard relative strength index (RSI) that includes an updated label with colors as RSI moves above/below 30%,50%,70% thresholds.
 
 ```
 declare lower;
@@ -725,13 +725,13 @@ DownSignal.SetDefaultColor(Color.DOWNTICK);
 DownSignal.SetPaintingStrategy(PaintingStrategy.ARROW_DOWN);
 
 AddLabel(yes, 
-    if RSI < over_Sold then "RSI: < 20 - Over sold"
-    else if RSI > over_Bought then "RSI: > 80 - Over bought"
-    else if RSI >= 50 then "RSI >= 50"
-    else "RSI < 50",
+    if RSI < over_Sold then "RSI: < " + over_Sold + " - Over sold"
+    else if RSI > over_Bought then "RSI: > " + over_Bought + " - Over bought"
+    else if RSI >= midpoint then "RSI >= " + midpoint
+    else "RSI < " + midpoint,
     if RSI < over_Sold then Color.GREEN
     else if RSI > over_Bought then Color.RED
-    else if RSI >= 50 then Color.ORANGE
+    else if RSI >= midpoint then Color.ORANGE
     else Color.LIGHT_GREEN);
 ```
 
@@ -794,8 +794,8 @@ DownSignal.SetDefaultColor(Color.DOWNTICK);
 DownSignal.SetPaintingStrategy(PaintingStrategy.ARROW_DOWN);
 
 AddLabel(yes, 
-    if FullK < over_Sold then "StochRSI: < 20 - Over sold"
-    else if FullK > over_Bought then "StochRSI: > 80 - Over bought"
+    if FullK < over_Sold then "StochRSI: < " + over_Sold + " - Over sold"
+    else if FullK > over_Bought then "StochRSI: > " + over_Bought + " - Over bought"
     else if FullK >= 50 then "StochRSI >= 50"
     else "StochRSI < 50",
     if FullK < over_Sold then Color.GREEN
