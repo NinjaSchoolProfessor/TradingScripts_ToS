@@ -693,8 +693,16 @@ declare lower;
 input length = 14;
 input over_Bought = 70;
 #hint over_Bought: Default signal for over bought is 70 but to reduce false positives many traders use 80.
+input overboughtAlertSound = Sound.Ding;
+#hint overboughtAlertSound: Choose alert sound for overbought condition
+input overboughtAlertCount = 4;
+#hint overboughtAlertCount: Number of times to play overbought alert (1-5)
 input over_Sold = 30;
 #hint over_Sold : Default signal for over sold is 30 but to reduce false positives many traders use 20.
+input oversoldAlertSound = Sound.Bell;
+#hint oversoldAlertSound: Choose alert sound for oversold condition
+input oversoldAlertCount = 4;
+#hint oversoldAlertCount: Number of times to play oversold alert (1-5)
 input price = close;
 input averageType = AverageType.WILDERS;
 input showBreakoutSignals = no;
@@ -723,6 +731,24 @@ UpSignal.SetDefaultColor(Color.UPTICK);
 UpSignal.SetPaintingStrategy(PaintingStrategy.ARROW_UP);
 DownSignal.SetDefaultColor(Color.DOWNTICK);
 DownSignal.SetPaintingStrategy(PaintingStrategy.ARROW_DOWN);
+
+# Alert conditions
+def oversoldAlert = RSI crosses below over_Sold;
+def overboughtAlert = RSI crosses above over_Bought;
+
+# Oversold alerts
+Alert(oversoldAlert and oversoldAlertCount >= 1, oversoldAlertSound, Alert.BAR);
+Alert(oversoldAlert and oversoldAlertCount >= 2, oversoldAlertSound, Alert.BAR);
+Alert(oversoldAlert and oversoldAlertCount >= 3, oversoldAlertSound, Alert.BAR);
+Alert(oversoldAlert and oversoldAlertCount >= 4, oversoldAlertSound, Alert.BAR);
+Alert(oversoldAlert and oversoldAlertCount >= 5, oversoldAlertSound, Alert.BAR);
+
+# Overbought alerts
+Alert(overboughtAlert and overboughtAlertCount >= 1, overboughtAlertSound, Alert.BAR);
+Alert(overboughtAlert and overboughtAlertCount >= 2, overboughtAlertSound, Alert.BAR);
+Alert(overboughtAlert and overboughtAlertCount >= 3, overboughtAlertSound, Alert.BAR);
+Alert(overboughtAlert and overboughtAlertCount >= 4, overboughtAlertSound, Alert.BAR);
+Alert(overboughtAlert and overboughtAlertCount >= 5, overboughtAlertSound, Alert.BAR);
 
 AddLabel(yes, 
     if RSI < over_Sold then "RSI: Over sold"
